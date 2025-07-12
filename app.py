@@ -1,5 +1,5 @@
 import streamlit as st
-from backend import check_plagiarism
+from backend import check_plagiarism_rapidapi
 
 st.set_page_config(page_title="CopyDetect", layout="centered")
 st.title("CopyDetect - Plagiarism Checker")
@@ -10,20 +10,20 @@ if st.button("Check Plagiarism"):
     if text_input.strip() == "":
         st.warning("Please enter some text first.")
     else:
-        with st.spinner("Scanning for plagiarism..."):
-            print("hi")
-            result = check_plagiarism(text_input)
-            print(result)
+        with st.spinner("🔍 Scanning for plagiarism..."):
+            result = check_plagiarism_rapidapi(text_input)
+
+
         if "error" in result:
-            st.exception(result["error"])
-        elif not result["matches"]:
+            st.error(f"API Error: {result['error']}")
+        elif result.get("percentPlagiarism") == 0:
             st.success("No plagiarism detected!")
         else:
-            st.success(f"Plagiarism found in {len(result['matches'])} source(s):")
+            percent = result.get("percentPlagiarism", 0)
+            st.warning(f"{percent}% Plagiarism Detected!")
 
-            for i, match in enumerate(result["matches"], 1):
-                st.markdown(f"""
-                ### {i}. [Source Link]({match['url']})
-                - 🔢 **Match Score:** {match['score']}%
-                - 📄 **Matched Words:** {match['word_count']}
-                """)
+            sources = result.get("sources", [])
+            if sources:
+                st.markdown("### 🔗 Sources Found:")
+                for i, url in enumerate(sources, 1):
+                    st.markdown(f"{i}. [Source Link]({url})")
